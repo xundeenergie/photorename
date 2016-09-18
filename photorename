@@ -1,0 +1,89 @@
+#!/bin/sh
+OR=false
+if [ "$1" = "--rename" ];then
+	shift
+	OR=true
+fi
+
+DEST="Bilder/Eingang" #Root ist ${HOME}, $DEST ist unterhalb des Homeverzeichnisses des Users.
+PICDEST="Bilder/Eingang" #Root ist ${HOME}, $DEST ist unterhalb des Homeverzeichnisses des Users.
+VIDDEST="Videos/Eingang" #Root ist ${HOME}, $DEST ist unterhalb des Homeverzeichnisses des Users.
+ORIGINAL="$1"
+FILENAME=""
+FEXT=$(/usr/bin/exiftool -FileTypeExtension "$ORIGINAL"|awk -F ": " '$1 ~ /File Type Extension/ {e=$2}END{print e}')
+if [ "$2"x = "x" ];then
+	case $FEXT in
+		mp4)
+			FT=Video
+			DEST=${HOME}/$VIDDEST;;
+		jpg|jpeg)
+			FT=Image
+			DEST=${HOME}/$PICDEST;;
+		*)
+			FT=None
+			DEST=${HOME}/"unsortiert";;
+	esac
+else
+	DEST="$2"
+fi
+FILENAME=$(/usr/bin/exiftool -CreateDate -FileTypeExtension "$ORIGINAL"|awk -F ": " '$1 ~ /Create Date/ {d=$2;d=gensub(":",".",1,d);d=gensub(":",".",1,d);d=gensub(":","-",1,d);d=gensub(":","-",1,d);d=gensub(" ","_",1,d)} $1 ~ /File Type Extension/ {e=$2}END{if (d != ""){print d"."e}}')
+
+if [ "$FILENAME"x = "x" ]
+then
+	echo "CreationDate failed"
+	FILENAME=$(/usr/bin/exiftool -ModifyDate -FileTypeExtension "$ORIGINAL"|awk -F ": " '$1 ~ /Modify Date/ {d=$2;d=gensub(":",".",1,d);d=gensub(":",".",1,d);d=gensub(":","-",1,d);d=gensub(":","-",1,d);d=gensub(" ","_",1,d)} $1 ~ /File Type Extension/ {e=$2}END{if (d != ""){print d"."e}}')
+else
+	if [ "$FILENAME"x = "x" ]
+	then
+		echo "ModifyDate failed"
+		FILENAME=$(/usr/bin/exiftool -FileModifyDate -FileTypeExtension "$ORIGINAL"|awk -F ": " '$1 ~ /FileModifyDate Date/ {d=$2;d=gensub(":",".",1,d);d=gensub(":",".",1,d);d=gensub(":","-",1,d);d=gensub(":","-",1,d);d=gensub(" ","_",1,d)} $1 ~ /File Type Extension/ {e=$2}END{if (d != ""){print d"."e}}')
+	else
+		if [ "$FILENAME"x = "x" ]
+		then
+			echo "FileModifyDate failed"
+			FILENAME=$(basename "$ORIGINAL")
+		#	echo "$0 move and rename file from Dropbox/Kameraupload to /home/$USER/Bilder/Eingang failed: $ORIGINAL"|tee ~/${0}.log
+		#	exit 1
+		else
+			:
+			#echo "FileModifyDate successful"
+		fi
+	fi
+fi
+
+
+
+#echo "FN: $FILENAME"
+FILENAMETMP="$FILENAME"
+FN="$FILENAME"
+INC=0
+while :
+do
+	INC=`expr $INC + 1`
+	if [ -e "${DEST}/${FILENAMETMP}" ] 
+	then
+		FILENAMETMP="${FILENAME%.*}-${INC}.${FILENAME##*.}"
+	else
+		FILENAME="$FILENAMETMP"
+		break
+	fi
+done
+
+
+echo "Original:  ${ORIGINAL}"
+
+#/bin/cp --reflink=auto -n "${ORIGINAL}" "/home/$USER/Bilder/Eingang/${FILENAME}"
+#echo "${DEST}/${FILENAME}"
+[ ! -e "${DEST}" ] && mkdir -p "${DEST}"
+
+if $OR; then
+	echo "Rename to: ${DEST}/${FN}"
+	/bin/mv "${ORIGINAL}" "${DEST}/${FN}"
+else
+	echo "Rename to: ${DEST}/${FILENAME}"
+	/bin/cp --reflink=auto -n "${ORIGINAL}" "${DEST}/${FILENAME}"
+fi
+
+
+
+exit
