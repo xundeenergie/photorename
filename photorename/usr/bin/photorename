@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 OR=false
 if [ "$1" = "--rename" ];then
 	shift
@@ -13,35 +13,37 @@ FILENAME=""
 FEXT=$(/usr/bin/exiftool -FileTypeExtension "$ORIGINAL"|awk -F ": " '$1 ~ /File Type Extension/ {e=$2}END{print e}')
 if [ "$2"x = "x" ];then
 	case $FEXT in
-		mp4)
+		mp4|mov|3gp)
 			FT=Video
 			DEST=${HOME}/$VIDDEST;;
-		jpg|jpeg)
+		jpg|jpeg|png|gif)
 			FT=Image
 			DEST=${HOME}/$PICDEST;;
 		*)
 			FT=None
-			DEST=${HOME}/"unsortiert";;
+			DEST=${HOME}/"unsortiert/Medien";;
 	esac
 else
 	DEST="$2"
 fi
+
+
 FILENAME=$(/usr/bin/exiftool -CreateDate -FileTypeExtension "$ORIGINAL"|awk -F ": " '$1 ~ /Create Date/ {d=$2;d=gensub(":",".",1,d);d=gensub(":",".",1,d);d=gensub(":","-",1,d);d=gensub(":","-",1,d);d=gensub(" ","_",1,d)} $1 ~ /File Type Extension/ {e=$2}END{if (d != ""){print d"."e}}')
 
-if [ "$FILENAME"x = "x" ]
+if [[ "$FILENAME"x == "x" || "${FILENAME%.*}" == "0000.00.00_00-00-00" ]]
 then
-	echo "CreationDate failed"
+	echo "no valid CreationDate"
 	FILENAME=$(/usr/bin/exiftool -ModifyDate -FileTypeExtension "$ORIGINAL"|awk -F ": " '$1 ~ /Modify Date/ {d=$2;d=gensub(":",".",1,d);d=gensub(":",".",1,d);d=gensub(":","-",1,d);d=gensub(":","-",1,d);d=gensub(" ","_",1,d)} $1 ~ /File Type Extension/ {e=$2}END{if (d != ""){print d"."e}}')
-else
-	if [ "$FILENAME"x = "x" ]
+	if [[ "$FILENAME"x == "x" || "${FILENAME%.*}" == "0000.00.00_00-00-00" ]]
 	then
-		echo "ModifyDate failed"
-		FILENAME=$(/usr/bin/exiftool -FileModifyDate -FileTypeExtension "$ORIGINAL"|awk -F ": " '$1 ~ /FileModifyDate Date/ {d=$2;d=gensub(":",".",1,d);d=gensub(":",".",1,d);d=gensub(":","-",1,d);d=gensub(":","-",1,d);d=gensub(" ","_",1,d)} $1 ~ /File Type Extension/ {e=$2}END{if (d != ""){print d"."e}}')
-	else
-		if [ "$FILENAME"x = "x" ]
+		echo "no valid ModifyDate"
+		FILENAME=$(/usr/bin/exiftool -FileModifyDate -FileTypeExtension "$ORIGINAL"|awk -F ": " '$1 ~ /FileModifyDate Date/ || $1 ~ /File Modification Date/{d=$2;d=gensub(":",".",1,d);d=gensub(":",".",1,d);d=gensub(":","-",1,d);d=gensub(":","-",1,d);d=gensub(" ","_",1,d)} $1 ~ /File Type Extension/ {e=$2}END{if (d != ""){print d"."e}}')
+		if [[ "$FILENAME"x == "x" || "${FILENAME%.*}" == "0000.00.00_00-00-00" ]]
 		then
-			echo "FileModifyDate failed"
+			#echo "${FILENAME%.*}"
+			echo "no valid FileModifyDate -> use originalname $(basename "$ORIGINAL")"
 			FILENAME=$(basename "$ORIGINAL")
+			#echo "${FILENAME%.*}"
 		#	echo "$0 move and rename file from Dropbox/Kameraupload to /home/$USER/Bilder/Eingang failed: $ORIGINAL"|tee ~/${0}.log
 		#	exit 1
 		else
@@ -77,13 +79,14 @@ echo "Original:  ${ORIGINAL}"
 [ ! -e "${DEST}" ] && mkdir -p "${DEST}"
 
 if $OR; then
-	echo "Rename to: ${DEST}/${FN}"
+	echo "Move/Rename to: ${DEST}/${FN}"
 	/bin/mv "${ORIGINAL}" "${DEST}/${FN}"
 else
-	echo "Rename to: ${DEST}/${FILENAME}"
+	echo "Copy to: ${DEST}/${FILENAME}"
 	/bin/cp --reflink=auto -n "${ORIGINAL}" "${DEST}/${FILENAME}"
 fi
 
+touch ${DEST}/.lastmove
 
 
 exit

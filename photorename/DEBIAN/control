@@ -1,0 +1,12 @@
+Package: photorename
+Version: 0.1.2
+Section: misc
+Priority: extra
+Architecture: all
+Maintainer: Jakobus Schürz <xundeenergie@gmail.com>
+Homepage: http://github.com/xundeenergie/photorename
+Provides: photorename
+Depends: libimage-exiftool-perl
+Recommends: incron 
+Description: Rename Pictures and Videos in always the same notation, depending on their exif-information 
+ Rename Pictures and Videos depending on their exif-informations and move them to the $HOME/Bilder or $HOME/Videos-Directories. Unspecific or unknown Files are moved to $HOME/unsortiert/Medien without renaming 
