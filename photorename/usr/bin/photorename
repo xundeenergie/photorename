@@ -5,9 +5,13 @@ if [ "$1" = "--rename" ];then
 	OR=true
 fi
 
-DEST="Bilder/Eingang" #Root ist ${HOME}, $DEST ist unterhalb des Homeverzeichnisses des Users.
-PICDEST="Bilder/Eingang" #Root ist ${HOME}, $DEST ist unterhalb des Homeverzeichnisses des Users.
-VIDDEST="Videos/Eingang" #Root ist ${HOME}, $DEST ist unterhalb des Homeverzeichnisses des Users.
+[ -e "${HOME}/.config/user-dirs.dirs" ] && . "${HOME}/.config/user-dirs.dirs"
+[ "$(xdg-user-dir UNSORT)" = "$HOME" ]  && xdg-user-dirs-update --force --set UNSORT $HOME/unsortiert || echo "nothing to do"
+
+
+PICDEST="${XDG_PICTURES_DIR}/Eingang" #Root ist ${HOME}, $DEST ist unterhalb des Homeverzeichnisses des Users.
+VIDDEST="${XDG_VIDEOS_DIR}/Eingang" #Root ist ${HOME}, $DEST ist unterhalb des Homeverzeichnisses des Users.
+UNSORTDEST="${XDG_UNSORT_DIR/Medien"
 ORIGINAL="$1"
 FILENAME=""
 FEXT=$(/usr/bin/exiftool -FileTypeExtension "$ORIGINAL"|awk -F ": " '$1 ~ /File Type Extension/ {e=$2}END{print e}')
@@ -15,13 +19,13 @@ if [ "$2"x = "x" ];then
 	case $FEXT in
 		mp4|mov|3gp)
 			FT=Video
-			DEST=${HOME}/$VIDDEST;;
+			DEST=${VIDDEST};;
 		jpg|jpeg|png|gif)
 			FT=Image
-			DEST=${HOME}/$PICDEST;;
+			DEST=${PICDEST};;
 		*)
 			FT=None
-			DEST=${HOME}/"unsortiert/Medien";;
+			DEST=${UNSORTDEST}";;
 	esac
 else
 	DEST="$2"
