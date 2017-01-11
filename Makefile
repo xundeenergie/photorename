@@ -5,8 +5,8 @@ ARCH=`gawk '$$1 == "Architecture:"{print $$2}' $(DIR)/DEBIAN/control`
 COMMIT = $(shell date "+xe%Y%m%d_%H%M%S")
 
 SUBDIRS := $(shell find $(DIR) -type d -print)
-FILTER := $(abspath .git% %.deb)
-FILTERORIG := $(abspath .git% %.deb) /DEBIAN%
+FILTER := $(abspath .git% %.deb .publish-git .builddeb %.swp Makefile)
+FILTERORIG := $(abspath .git% %.deb .publish-git .builddeb %.swp Makefile) /DEBIAN%
 FILES := $(filter-out $(FILTER), $(abspath $(shell find . -mindepth 1 -type f -print)))
 ORIGS := $(filter-out $(FILTERORIG), $(realpath $(subst ./$(DIR),,$(shell find . -mindepth 2 -type f -print))))
 FILESGIT := $(filter-out $(abspath .git%), $(abspath $(shell find . -mindepth 1 -type f -print)))
