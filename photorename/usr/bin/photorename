@@ -11,7 +11,7 @@ fi
 
 PICDEST="${XDG_PICTURES_DIR}/Eingang" #Root ist ${HOME}, $DEST ist unterhalb des Homeverzeichnisses des Users.
 VIDDEST="${XDG_VIDEOS_DIR}/Eingang" #Root ist ${HOME}, $DEST ist unterhalb des Homeverzeichnisses des Users.
-UNSORTDEST="${XDG_UNSORT_DIR/Medien"
+UNSORTDEST="${XDG_UNSORT_DIR}/Medien"
 ORIGINAL="$1"
 FILENAME=""
 FEXT=$(/usr/bin/exiftool -FileTypeExtension "$ORIGINAL"|awk -F ": " '$1 ~ /File Type Extension/ {e=$2}END{print e}')
@@ -19,13 +19,13 @@ if [ "$2"x = "x" ];then
 	case $FEXT in
 		mp4|mov|3gp)
 			FT=Video
-			DEST=${VIDDEST};;
+			DEST="${VIDDEST}";;
 		jpg|jpeg|png|gif)
 			FT=Image
-			DEST=${PICDEST};;
+			DEST="${PICDEST}";;
 		*)
 			FT=None
-			DEST=${UNSORTDEST}";;
+			DEST="${UNSORTDEST}";;
 	esac
 else
 	DEST="$2"
