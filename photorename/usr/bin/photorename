@@ -5,16 +5,27 @@ if [ "$1" = "--move" ];then
 	OR=true
 fi
 
+MONDIR=true #Monatsdirectory 2017_05, if false, then direct delivery in $DEST
+
 [ -e "${HOME}/.config/user-dirs.dirs" ] && . "${HOME}/.config/user-dirs.dirs"
-[ "$(xdg-user-dir UNSORT)" = "$HOME" ]  && xdg-user-dirs-update --force --set UNSORT $HOME/unsortiert || echo "nothing to do"
+if [ "$(xdg-user-dir UNSORT)" = "$HOME" ] ;then
+    xdg-user-dirs-update --force --set UNSORT $HOME/unsortiert 
+else
+    echo "$(xdg-user-dir UNSORT) is unsort-directory, nothing to do"
+fi
 
 
 PICDEST="${XDG_PICTURES_DIR}/Eingang" #Root ist ${HOME}, $DEST ist unterhalb des Homeverzeichnisses des Users.
 VIDDEST="${XDG_VIDEOS_DIR}/Eingang" #Root ist ${HOME}, $DEST ist unterhalb des Homeverzeichnisses des Users.
 UNSORTDEST="${XDG_UNSORT_DIR}/Medien"
 ORIGINAL="$1"
+if stat "${ORIGINAL}" > /dev/null &2>/dev/null; then
+    exit $?
+fi
+
 FILENAME=""
 FEXT=$(/usr/bin/exiftool -FileTypeExtension "$ORIGINAL"|awk -F ": " '$1 ~ /File Type Extension/ {e=$2}END{print e}')
+
 if [ "$2"x = "x" ];then
 	case $FEXT in
 		mp4|mov|3gp)
@@ -32,6 +43,12 @@ else
 fi
 
 
+#CreateDate=$(/usr/bin/exiftool -CreateDate -FileTypeExtension "${ORIGINAL}"|awk -F ": " '$1 ~ /Create Date/ {d=$2;d=gensub(":",".",1,d);d=gensub(":",".",1,d);d=gensub(":","-",1,d);d=gensub(":","-",1,d);d=gensub(" ","_",1,d)} $1 ~ /File Type Extension/ {e=$2}END{if (d != ""){print d"."e}}')
+#ModifyDate=$(/usr/bin/exiftool -ModifyDate -FileTypeExtension "$ORIGINAL"|awk -F ": " '$1 ~ /Modify Date/ {d=$2;d=gensub(":",".",1,d);d=gensub(":",".",1,d);d=gensub(":","-",1,d);d=gensub(":","-",1,d);d=gensub(" ","_",1,d)} $1 ~ /File Type Extension/ {e=$2}END{if (d != ""){print d"."e}}')
+#FileModifyDate=$(/usr/bin/exiftool -FileModifyDate -FileTypeExtension "$ORIGINAL"|awk -F ": " '$1 ~ /FileModifyDate Date/ || $1 ~ /File Modification Date/{d=$2;d=gensub(":",".",1,d);d=gensub(":",".",1,d);d=gensub(":","-",1,d);d=gensub(":","-",1,d);d=gensub(" ","_",1,d)} $1 ~ /File Type Extension/ {e=$2}END{if (d != ""){print d"."e}}')
+#
+#for i in CreateDate ModifyDate FileModifyDate;do echo X $i: $(echo ${!i});done
+#
 FILENAME=$(/usr/bin/exiftool -CreateDate -FileTypeExtension "$ORIGINAL"|awk -F ": " '$1 ~ /Create Date/ {d=$2;d=gensub(":",".",1,d);d=gensub(":",".",1,d);d=gensub(":","-",1,d);d=gensub(":","-",1,d);d=gensub(" ","_",1,d)} $1 ~ /File Type Extension/ {e=$2}END{if (d != ""){print d"."e}}')
 
 if [[ "$FILENAME"x == "x" || "${FILENAME%.*}" == "0000.00.00_00-00-00" ]]
@@ -80,6 +97,15 @@ echo "Original:  ${ORIGINAL}"
 
 #/bin/cp --reflink=auto -n "${ORIGINAL}" "/home/$USER/Bilder/Eingang/${FILENAME}"
 #echo "${DEST}/${FILENAME}"
+
+if $MONDIR; then
+    echo FN $FN : FILENAME $FILENAME
+    DATE=$(echo ${FILENAME%_*}|sed -e 's/\./-/g')
+    read Y M D < <(date -d "$DATE" '+%Y %m %d')
+    DEST="${DEST}/${Y}_${M}"
+    echo DATE: $DATE DEST: $DEST : $Y : $M : $D
+fi
+
 [ ! -e "${DEST}" ] && mkdir -p "${DEST}"
 
 if $OR; then
