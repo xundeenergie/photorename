@@ -11,7 +11,7 @@ MONDIR=true #Monatsdirectory 2017_05, if false, then direct delivery in $DEST
 if [ "$(xdg-user-dir UNSORT)" = "$HOME" ] ;then
     xdg-user-dirs-update --force --set UNSORT $HOME/unsortiert 
 else
-    echo "$(xdg-user-dir UNSORT) is unsort-directory, nothing to do"
+    echo "$(xdg-user-dir UNSORT) is unsort-directory. This is ok"
 fi
 
 
@@ -19,9 +19,12 @@ PICDEST="${XDG_PICTURES_DIR}/Eingang" #Root ist ${HOME}, $DEST ist unterhalb des
 VIDDEST="${XDG_VIDEOS_DIR}/Eingang" #Root ist ${HOME}, $DEST ist unterhalb des Homeverzeichnisses des Users.
 UNSORTDEST="${XDG_UNSORT_DIR}/Medien"
 ORIGINAL="$1"
-if stat "${ORIGINAL}" > /dev/null &2>/dev/null; then
-    exit $?
+if test ! -e "${ORIGINAL}" ; then
+    exit 1
 fi
+#if stat "${ORIGINAL}" > /dev/null &2>/dev/null; then
+#    exit $?
+#fi
 
 FILENAME=""
 FEXT=$(/usr/bin/exiftool -FileTypeExtension "$ORIGINAL"|awk -F ": " '$1 ~ /File Type Extension/ {e=$2}END{print e}')
